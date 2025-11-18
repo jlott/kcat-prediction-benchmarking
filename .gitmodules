@@ -1,0 +1,3 @@
+[submodule "models/DLKcat"]
+	path = models/DLKcat
+	url = git@github.com:SysBioChalmers/DLKcat.git
