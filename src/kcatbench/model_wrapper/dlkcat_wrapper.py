@@ -2,11 +2,11 @@ from pathlib import Path
 import sys
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
-DLKCAT_CODE_DIR = (ROOT_DIR / "models" / "DLKcat" / "DeeplearningApproach" / "Code" / "example")
+DLKCAT_CODE_DIR = (ROOT_DIR / "models" / "DLKcat" / "DeeplearningApproach")
 DLKCAT_DATA_DIR = (ROOT_DIR / "data" / "DLKcat") 
 
-if str(DLKCAT_CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(DLKCAT_CODE_DIR))
+if str(DLKCAT_CODE_DIR / "Code" / "example") not in sys.path:
+    sys.path.insert(0, str(DLKCAT_CODE_DIR / "Code" / "example"))
 
 
 from .base import BaseModel
@@ -27,6 +27,7 @@ class DLKcatWrapper(BaseModel):
     fingerprint_dict = model.load_pickle(DLKCAT_DATA_DIR / "input" / "fingerprint_dict.pickle")
     atom_dict = model.load_pickle(DLKCAT_DATA_DIR / "input" / "atom_dict.pickle")
     bond_dict = model.load_pickle(DLKCAT_DATA_DIR / "input" / "bond_dict.pickle")
+    edge_dict = model.load_pickle(DLKCAT_DATA_DIR / "input" / "edge_dict.pickle")
     word_dict = model.load_pickle(DLKCAT_DATA_DIR / "input" / "sequence_dict.pickle")
     
 
@@ -70,7 +71,7 @@ class DLKcatWrapper(BaseModel):
             device = torch.device('cpu')
 
         Kcat_model = model.KcatPrediction(device, n_fingerprint, n_word, 2*dim, layer_gnn, window, layer_cnn, layer_output).to(device)
-        Kcat_model.load_state_dict(torch.load('../../Results/output/all--radius2--ngram3--dim20--layer_gnn3--window11--layer_cnn3--layer_output3--lr1e-3--lr_decay0.5--decay_interval10--weight_decay1e-6--iteration50', map_location=device))
+        Kcat_model.load_state_dict(torch.load(str(DLKCAT_CODE_DIR / "Results" / "output" / "all--radius2--ngram3--dim20--layer_gnn3--window11--layer_cnn3--layer_output3--lr1e-3--lr_decay0.5--decay_interval10--weight_decay1e-6--iteration50"), map_location=device))
         predictor = Predictor(Kcat_model)
 
         required_cols = {"name", "smiles", "sequence"}
@@ -130,6 +131,7 @@ class DLKcatWrapper(BaseModel):
                 result["kcat_prediction"] = kcat_value
                 results.append(result)
             except:
+                print("EXCEPTION")
                 results.append(result)
                 continue
 
