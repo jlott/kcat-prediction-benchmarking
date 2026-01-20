@@ -32,7 +32,7 @@ class Model(BaseModel):
 
             cmd = [
                 "conda", "run", "-n", self.env_name,
-                "python", "-m", "kcatbench.model_worker.py", "predict"
+                "python", "-m", "kcatbench.model_worker", "predict"
                 "--model", self.model_name, "--input", str(input_path), "--output", str(output_path)
             ]
 
