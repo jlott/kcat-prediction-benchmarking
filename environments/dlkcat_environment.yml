@@ -1,0 +1,11 @@
+name: dlkcat_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13.10
+  - pytorch
+  - numpy
+  - requests
+  - scikit-learn
+  - pandas
+  - rdkit

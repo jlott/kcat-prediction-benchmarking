@@ -1,7 +1,7 @@
-from .model_wrapper.dlkcat_wrapper import DLKcatWrapper
+from .model_wrapper.model_wrapper import Model
 from .model_wrapper.base import BaseModel
 
 __all__ = [
-    'DLKcatWrapper', 
+    'Model', 
     'BaseModel'
 ]

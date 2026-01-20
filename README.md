@@ -30,3 +30,4 @@ pip install -e .
 | ------ | --------------- | ------------------------------------------------------------------------------------ |
 | DLKcat | `models/DLKcat` | [https://github.com/SysBioChalmers/DLKcat](https://github.com/SysBioChalmers/DLKcat) |
 | MMKcat | `models/MMKcat` | [https://github.com/ProEcho1/MMKcat](https://github.com/ProEcho1/MMKcat) |
+| CataPro | `models/CataPro` | [https://github.com/ProEcho1/MMKcat](https://github.com/ProEcho1/MMKcat) |

@@ -1,15 +1,15 @@
-from pathlib import Path
 import sys
 
-ROOT_DIR = Path(__file__).resolve().parents[3]
-DLKCAT_CODE_DIR = (ROOT_DIR / "models" / "DLKcat" / "DeeplearningApproach")
-DLKCAT_DATA_DIR = (ROOT_DIR / "data" / "DLKcat") 
+from kcatbench.util import MODELS_DIR, DATA_DIR
+
+DLKCAT_CODE_DIR = (MODELS_DIR / "DLKcat" / "DeeplearningApproach")
+DLKCAT_DATA_DIR = (DATA_DIR / "DLKcat") 
 
 if str(DLKCAT_CODE_DIR / "Code" / "example") not in sys.path:
     sys.path.insert(0, str(DLKCAT_CODE_DIR / "Code" / "example"))
 
 
-from .base import BaseModel
+from kcatbench.model_wrapper.base import BaseModel
 import model
 import pandas as pd
 import numpy as np
@@ -36,7 +36,7 @@ class DLKcatWrapper(BaseModel):
         self._prepare_resources()
 
     def _prepare_resources(self):
-        input_zip_file = ROOT_DIR / "models" / "DLKcat" / "DeeplearningApproach" / "Data" / "input.zip"
+        input_zip_file = DLKCAT_CODE_DIR / "Data" / "input.zip"
         
         if not input_zip_file.exists():
             raise FileNotFoundError(f"DLKcat resource zip not found at: {input_zip_file}")
