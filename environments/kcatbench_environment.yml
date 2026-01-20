@@ -1,0 +1,6 @@
+name: kcatbench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14.2
+  - pandas
