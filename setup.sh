@@ -7,12 +7,14 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ENV_NAMES=(
   "dlkcat_env"
-  # "othermodel_env"
+  "mmkcat_env"
+  "catapro_env"
 )
 
 ENV_FILES=(
   "${ROOT_DIR}/environments/dlkcat_environment.yml"
-  # "${ROOT_DIR}/envs/othermodel.yml"
+  "${ROOT_DIR}/environments/mmkcat_environment.yml"
+  "${ROOT_DIR}/environments/catapro_environment.yml"
 )
 
 if [ "${#ENV_NAMES[@]}" -ne "${#ENV_FILES[@]}" ]; then
