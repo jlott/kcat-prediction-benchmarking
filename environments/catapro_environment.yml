@@ -5,6 +5,7 @@ dependencies:
   - python=3.10.*
   - pytorch
   - numpy
+  - huggingface_hub
   - transformers
   - sentencepiece
   - pandas
