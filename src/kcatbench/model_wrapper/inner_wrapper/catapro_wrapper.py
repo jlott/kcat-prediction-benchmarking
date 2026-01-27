@@ -13,11 +13,11 @@ import torch as th
 from huggingface_hub import snapshot_download
 from kcatbench.model_wrapper.base import BaseModel
 
-from utils import *
-from model import *
-from act_model import KcatModel # as _KcatModel
-from act_model import KmModel # as _KmModel
-from act_model import ActivityModel
+from inference.utils import *
+from inference.model import *
+from inference.act_model import KcatModel # as _KcatModel
+from inference.act_model import KmModel # as _KmModel
+from inference.act_model import ActivityModel
 from torch.utils.data import DataLoader, Dataset
 
 class CataProWrapper(BaseModel):

@@ -1,9 +1,12 @@
 [submodule "models/DLKcat"]
 	path = models/DLKcat
 	url = https://github.com/SysBioChalmers/DLKcat.git
+	ignore = dirty
 [submodule "models/MMKcat"]
 	path = models/MMKcat
 	url = https://github.com/ProEcho1/MMKcat.git
+	ignore = dirty
 [submodule "models/CataPro"]
 	path = models/CataPro
 	url = https://github.com/zchwang/CataPro.git
+	ignore = dirty
