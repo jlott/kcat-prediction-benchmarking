@@ -8,8 +8,14 @@ def _predict_dlkcat(input:pd.DataFrame) -> pd.DataFrame:
     model = DLKcatWrapper()
     return model.predict(input)
 
+def _predict_catapro(input:pd.DataFrame) -> pd.DataFrame:
+    from kcatbench.model_wrapper.inner_wrapper.catapro_wrapper import CataProWrapper
+    model = CataProWrapper()
+    return model.predict(input)
+
 PREDICT_HANDLERS: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
-    "dlkcat": _predict_dlkcat
+    "dlkcat": _predict_dlkcat,
+    "catapro": _predict_catapro
 }
 
 def run_predict(model:str, input_path:Path, output_path:Path):

@@ -6,7 +6,8 @@ from pathlib import Path
 from kcatbench.model_wrapper.base import BaseModel
 
 ENVIRONMENT_NAMES: dict[str, str] = {
-    "dlkcat": "dlkcat_env"
+    "dlkcat": "dlkcat_env",
+    "catapro": "catapro_env"
 }
 
 class Model(BaseModel):
