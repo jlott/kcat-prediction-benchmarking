@@ -28,11 +28,14 @@ class CataProWrapper(BaseModel):
         self._prepare_resources()
 
     def _prepare_resources(self):
-        print("START DOWNLOAD")
-        tmp1 = snapshot_download(repo_id="Rostlab/prot_t5_xl_uniref50", local_dir=(CATAPRO_DATA_DIR / "prot_t5_xl_uniref50"))
-        print(f"DOWNLOAD 1 COMPLETE:{tmp1}")
-        tmp2 = snapshot_download(repo_id="laituan245/molt5-base-smiles2caption", local_dir=(CATAPRO_DATA_DIR / "molt5-base-smiles2caption"))
-        print(f"DOWNLOAD 2 COMPLETE:{tmp2}")
+        prot_t5_dir = CATAPRO_DATA_DIR / "prot_t5_xl_uniref50"
+        molt5_dir = CATAPRO_DATA_DIR / "molt5-base-smiles2caption"
+        
+        if not prot_t5_dir.exists():
+            snapshot_download(repo_id="Rostlab/prot_t5_xl_uniref50", local_dir=prot_t5_dir)
+        
+        if not molt5_dir.exists():
+            snapshot_download(repo_id="laituan245/molt5-base-smiles2caption", local_dir=molt5_dir)
 
     def predict(self, input_data: pd.DataFrame) -> pd.DataFrame:
 
@@ -73,7 +76,7 @@ class CataProWrapper(BaseModel):
         
         return final_df
     
-    def _get_datasets(input_data: pd.DataFrame, ProtT5_model, MolT5_model):
+    def _get_datasets(self, input_data: pd.DataFrame, ProtT5_model, MolT5_model):
         # inp_df = pd.read_csv(inp_fpath, index_col=0)
         ezy_ids = input_data["Enzyme_id"].values
         ezy_type = input_data["type"].values
@@ -91,7 +94,7 @@ class CataProWrapper(BaseModel):
         
         return ezy_keys, smiles, dataloader
     
-    def _inference(kcat_model, Km_model, act_model, dataloader, device="cuda:0"):
+    def _inference(self, kcat_model, Km_model, act_model, dataloader, device="cuda:0"):
         kcat_model.eval()
         Km_model.eval()
         act_model.eval()

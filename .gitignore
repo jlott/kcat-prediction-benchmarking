@@ -15,6 +15,9 @@ dist/
 data/DLKcat/*
 !data/DLKcat/.gitkeep
 
+data/CataPro/*
+!data/CataPro/.gitkeep
+
 # Python cache / build
 __pycache__/
 *.py[cod]
