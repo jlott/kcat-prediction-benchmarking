@@ -13,9 +13,15 @@ def _predict_catapro(input:pd.DataFrame) -> pd.DataFrame:
     model = CataProWrapper()
     return model.predict(input)
 
+def _predict_catpred(input:pd.DataFrame) -> pd.DataFrame:
+    from kcatbench.model_wrapper.inner_wrapper.catpred_wrapper import CatPredWrapper
+    model = CatPredWrapper()
+    return model.predict(input)
+
 PREDICT_HANDLERS: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
     "dlkcat": _predict_dlkcat,
-    "catapro": _predict_catapro
+    "catapro": _predict_catapro,
+    "catpred": _predict_catpred
 }
 
 def run_predict(model:str, input_path:Path, output_path:Path):

@@ -7,7 +7,8 @@ from kcatbench.model_wrapper.base import BaseModel
 
 ENVIRONMENT_NAMES: dict[str, str] = {
     "dlkcat": "dlkcat_env",
-    "catapro": "catapro_env"
+    "catapro": "catapro_env",
+    "catpred": "catpred_env"
 }
 
 class Model(BaseModel):
