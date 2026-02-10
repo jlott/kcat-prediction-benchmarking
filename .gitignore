@@ -18,6 +18,8 @@ data/DLKcat/*
 data/CataPro/*
 !data/CataPro/.gitkeep
 
+data/results/*
+
 # Python cache / build
 __pycache__/
 *.py[cod]
