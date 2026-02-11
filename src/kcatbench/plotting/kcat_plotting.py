@@ -26,18 +26,27 @@ def plot_model_comparison(df, model_x, model_y, log_scale=True):
         data=plot_data, 
         x=model_x, 
         y=model_y, 
-        alpha=0.6, 
+        alpha=0.2, 
         edgecolor="k",
-        s=80
+        s=10
     )
     
-    min_val = min(plot_data[model_x].min(), plot_data[model_y].min())
-    max_val = max(plot_data[model_x].max(), plot_data[model_y].max())
+    data_min = min(plot_data[model_x].min(), plot_data[model_y].min())
+    data_max = max(plot_data[model_x].max(), plot_data[model_y].max())
     
     if log_scale:
-        min_val = min_val if min_val > 0 else 1e-4
+        pad_factor = 2.0
+        lower_limit = data_min / pad_factor
+        upper_limit = data_max * pad_factor
+    else:
+        pad = (data_max - data_min) * 0.05
+        lower_limit = data_min - pad
+        upper_limit = data_max + pad
+
+    print(lower_limit)
+    print(upper_limit)
         
-    plt.plot([min_val, max_val], [min_val, max_val], 'r--', label='Perfect Agreement', lw=2)
+    plt.plot([lower_limit, upper_limit], [lower_limit, upper_limit], 'r--', label='Perfect Agreement', lw=2)
 
     if log_scale:
         plt.xscale('log')
@@ -48,6 +57,11 @@ def plot_model_comparison(df, model_x, model_y, log_scale=True):
         plt.xlabel(f"{model_x} $k_{{cat}}$ ($s^{{-1}}$)", fontsize=12)
         plt.ylabel(f"{model_y} $k_{{cat}}$ ($s^{{-1}}$)", fontsize=12)
         
+    plt.xlim(lower_limit, upper_limit)
+    plt.ylim(lower_limit, upper_limit)
+    
+    # plt.gca().set_aspect('equal', adjustable='box')
+    
     plt.title(f"Comparison: {model_x} vs {model_y}", fontsize=14)
     plt.legend()
     
