@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import pandas as pd
 import matplotlib.transforms as transforms
 from matplotlib.patches import Ellipse
+from matplotlib.ticker import FuncFormatter
 from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr
 from pathlib import Path
+from upsetplot import from_contents, UpSet
 from kcatbench.util import ROOT_DIR
 
 def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
@@ -64,11 +67,23 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 
 
 
-def plot_model_comparison(df, model_x, model_y, model_x_name, model_y_name, log_scale=True, gridsize=50, save=False):
+def plot_model_comparison(df:pd.DataFrame, model_x:str, model_y:str, model_x_name:str, model_y_name:str, log_scale=True, gridsize=50, save=False, vmax=None):
     fig, ax = plt.subplots(figsize=(8, 8))
     sns.set_style("ticks")
+
+    plot_data = df[[model_x, model_y]].dropna().copy()
+
+    # 2. FORCE list extraction BEFORE any math or comparisons happen
+    for col in [model_x, model_y]:
+        # A simpler, more aggressive lambda to pull the first item
+        plot_data[col] = plot_data[col].apply(
+            lambda x: x[0] if type(x) in [list, np.ndarray, tuple] else x
+        )
+        
+        # Force the column to be numeric floats
+        plot_data[col] = pd.to_numeric(plot_data[col], errors='coerce')
     
-    plot_data = df[[model_x, model_y]].dropna()
+    plot_data = plot_data[[model_x, model_y]].dropna()
     plot_data = plot_data[~plot_data.isin([np.inf, -np.inf]).any(axis=1)]
 
     if log_scale:
@@ -80,58 +95,48 @@ def plot_model_comparison(df, model_x, model_y, model_x_name, model_y_name, log_
     
     x_vals = plot_data[model_x]
     y_vals = plot_data[model_y]
-    
-    if log_scale:
-        log_x = np.log10(x_vals)
-        log_y = np.log10(y_vals)
-        
-        r, _ = pearsonr(log_x, log_y)
-        rmse = np.sqrt(mean_squared_error(log_x, log_y))
-        stats_text = (f"Pearson $r = {r:.2f}$\n")
-    else:
-        r, _ = pearsonr(x_vals, y_vals)
-        rmse = np.sqrt(mean_squared_error(x_vals, y_vals))
-        stats_text = (f"$N = {len(plot_data)}$\n"
-                      f"Pearson $r = {r:.2f}$\n"
-                      f"RMSE = {rmse:.2f}")
-
 
     data_min = min(plot_data[model_x].min(), plot_data[model_y].min())
     data_max = max(plot_data[model_x].max(), plot_data[model_y].max())
     
     if log_scale:
+        plot_x = np.log10(x_vals)
+        plot_y = np.log10(y_vals)
+        
+        r, _ = pearsonr(plot_x, plot_y)
+        rmse = np.sqrt(mean_squared_error(plot_x, plot_y))
+        stats_text = (f"Pearson $r = {r:.2f}$\n"
+                      f"$N = {len(plot_data)}$")
+        
         pad_factor = 2.0
-
         safe_min = data_min if data_min > 1e-10 else 1e-4
-
-        lower_limit = safe_min / pad_factor
-        upper_limit = data_max * pad_factor
+        lower_limit = np.log10(safe_min / pad_factor)
+        upper_limit = np.log10(data_max * pad_factor)
     else:
+        plot_x = x_vals
+        plot_y = y_vals
+        r, _ = pearsonr(plot_x, plot_y)
+        rmse = np.sqrt(mean_squared_error(plot_x, plot_y))
+        stats_text = (f"$N = {len(plot_data)}$\n"
+                      f"Pearson $r = {r:.2f}$\n"
+                      f"RMSE = {rmse:.2f}")
+                      
         pad = (data_max - data_min) * 0.05
         lower_limit = data_min - pad
         upper_limit = data_max + pad
 
-    # sns.scatterplot(
-    #     data=plot_data, 
-    #     x=model_x, 
-    #     y=model_y, 
-    #     alpha=0.2, 
-    #     edgecolor="k",
-    #     s=10
-    # )
-
     hb = ax.hexbin(
-        x_vals, 
-        y_vals, 
+        plot_x, 
+        plot_y, 
         gridsize=gridsize, 
         cmap='inferno_r',
         mincnt=1,     
-        xscale='log' if log_scale else 'linear',
-        yscale='log' if log_scale else 'linear',
-        edgecolors='none' 
+        edgecolors='none',
+        extent=[lower_limit, upper_limit, lower_limit, upper_limit],
+        vmax=vmax
     )
 
-    confidence_ellipse(np.log10(x_vals), np.log10(y_vals), ax, edgecolor='red', linewidth=2)
+    confidence_ellipse(plot_x, plot_y, ax, edgecolor='red', linestyle='--', linewidth=1)
     
     cb = plt.colorbar(
         hb, 
@@ -156,10 +161,13 @@ def plot_model_comparison(df, model_x, model_y, model_x_name, model_y_name, log_
              bbox=dict(boxstyle='round', facecolor='white', alpha=0.9))
 
     if log_scale:
-        plt.xscale('log')
-        plt.yscale('log')
-        plt.xlabel(f"{model_x_name} $k_{{cat}}$ ($s^{{-1}}$) [log scale]", fontsize=12)
-        plt.ylabel(f"{model_y_name} $k_{{cat}}$ ($s^{{-1}}$) [log scale]", fontsize=12)
+        plt.xlabel(f"{model_x_name} $k_{{cat}}$ ($s^{{-1}}$) [log scale]", fontsize=14)
+        plt.ylabel(f"{model_y_name} $k_{{cat}}$ ($s^{{-1}}$) [log scale]", fontsize=14)
+
+        log_formatter = FuncFormatter(lambda x, pos: f"$10^{{{x:g}}}$")
+        
+        ax.xaxis.set_major_formatter(log_formatter)
+        ax.yaxis.set_major_formatter(log_formatter)
     else:
         plt.xlabel(f"{model_x_name} $k_{{cat}}$ ($s^{{-1}}$)", fontsize=12)
         plt.ylabel(f"{model_y_name} $k_{{cat}}$ ($s^{{-1}}$)", fontsize=12)
@@ -170,11 +178,29 @@ def plot_model_comparison(df, model_x, model_y, model_x_name, model_y_name, log_
     plt.gca().set_box_aspect(1)
     sns.despine()
 
-    plt.gca().minorticks_off()
+    n_std_val = 3.0 
+    
+    # 2. Calculate the exact standard deviations and means
+    cov_matrix = np.cov(plot_x, plot_y)
+    std_x = np.sqrt(cov_matrix[0, 0])
+    std_y = np.sqrt(cov_matrix[1, 1])
+    mean_x = np.mean(plot_x)
+    mean_y = np.mean(plot_y)
+    
+    # 3. Calculate the exact bounding box edges
+    x_bounds = [mean_x - (n_std_val * std_x), mean_x + (n_std_val * std_x)]
+    y_bounds = [mean_y - (n_std_val * std_y), mean_y + (n_std_val * std_y)]
+    
+    # 4. Inject these explicitly as minor ticks
+    ax.set_xticks(x_bounds, minor=True)
+    ax.set_yticks(y_bounds, minor=True)
+    
+    # 5. Style only the minor ticks to be red, thicker, and point inward
+    ax.tick_params(which='minor', color='red', length=8, width=2, direction='in')
+
     cb.ax.minorticks_off()
     
-    plt.title(f"{model_x_name} vs {model_y_name}", fontsize=14)
-    # plt.legend()
+    plt.title(f"{model_x_name} vs {model_y_name}", fontsize=16, fontweight='bold')
     
     plt.tight_layout()
 
@@ -186,3 +212,119 @@ def plot_model_comparison(df, model_x, model_y, model_x_name, model_y_name, log_
             transparent=False   
         )
     plt.show()
+
+def get_performance_subsets(df, models, percentage=10, subset_type='best'):
+    
+    if subset_type not in ['best', 'worst']:
+        raise ValueError("subset_type must be either 'best' or 'worst'")
+        
+    model_sets = {}
+    
+    for model in models:
+        mod_col = f"{model}_kcat"
+
+        clean_df = df.copy()
+
+        clean_df[mod_col] = clean_df[mod_col].apply(
+            lambda x: x[0] if type(x) in [list, np.ndarray, tuple] else x
+        )
+        
+        # Force the column to be numeric floats
+        clean_df[mod_col] = pd.to_numeric(clean_df[mod_col], errors='coerce')
+        
+        # 1. Filter out invalid/zero values to safely calculate log10
+        valid_mask = (
+            (clean_df['experimental_kcat'] > 0) & 
+            (clean_df[mod_col] > 0) & 
+            clean_df['experimental_kcat'].notna() & 
+            clean_df[mod_col].notna()
+        )
+        clean_df = clean_df[valid_mask]
+        
+        if len(clean_df) == 0:
+            print(f"Warning: No valid data found for {model}.")
+            model_sets[model] = set()
+            continue
+            
+        # 2. Calculate the absolute error in log10 space
+        # Error = |log10(model) - log10(experimental)|
+        errors = np.abs(np.log10(clean_df[mod_col]) - np.log10(clean_df['experimental_kcat']))
+        
+        # 3. Determine the threshold based on the requested subset
+        if subset_type == 'best':
+            # For the "best" 10%, we want the 10th percentile of errors
+            # and we keep everything smaller than or equal to that threshold.
+            threshold = np.percentile(errors, percentage)
+            subset_mask = errors <= threshold
+            
+        elif subset_type == 'worst':
+            # For the "worst" 10%, we want the 90th percentile of errors
+            # and we keep everything greater than or equal to that threshold.
+            threshold = np.percentile(errors, 100 - percentage)
+            subset_mask = errors >= threshold
+            
+        # 4. Extract the IDs and convert to a Python set for easy comparison
+        subset_ids = clean_df.loc[subset_mask, 'ID'].tolist()
+        model_sets[model] = set(subset_ids)
+        
+    return model_sets
+
+def plot_model_upset(model_sets, display_names, title="Model Agreement on Top 10% Predictions", save_path=None):
+    """
+    Creates an UpSet plot from a dictionary of overlapping sets.
+    """
+    if not model_sets or all(len(s) == 0 for s in model_sets.values()):
+        print("Error: No data in model_sets to plot.")
+        return
+
+    # --- THE FIX ---
+    # Temporarily disable Pandas Copy-on-Write to prevent upsetplot from crashing
+    original_cow = pd.options.mode.copy_on_write
+    pd.options.mode.copy_on_write = False
+
+    plot_ready_sets = {}
+    for old_name, reaction_set in model_sets.items():
+        # Get the new name if it exists, otherwise use the old one
+        new_name = display_names.get(old_name, old_name) 
+        plot_ready_sets[new_name] = reaction_set
+    
+    try:
+        # Convert the dictionary into the upsetplot format
+        upset_data = from_contents(plot_ready_sets)
+        
+        # Configure the UpSet plot
+        upset = UpSet(
+            upset_data, 
+            subset_size='count', 
+            show_counts=False, 
+            sort_by='cardinality',
+            sort_categories_by='cardinality',
+            facecolor="darkblue",
+            element_size=40
+        )
+
+        upset.style_subsets(min_degree=6, max_degree=6, facecolor="red")
+        upset.style_subsets(min_degree=5, max_degree=5, facecolor=(1.0, 0.0, 0.0, 0.7))
+        
+        # Create the figure and render the plot
+        fig = plt.figure(figsize=(10, 6))
+
+        axes_dict = upset.plot(fig=fig)
+    
+        # The set names live on the y-axis of the 'matrix' plot
+        axes_dict['matrix'].tick_params(axis='y', labelsize=15)  # <-- Increase this number to make it bigger
+
+        # upset.plot(fig=fig)
+        
+        # Add the title
+        plt.suptitle(title, fontsize=24, fontweight='bold')
+        
+        # Save or show
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', transparent=False)
+            
+        plt.show()
+        
+    finally:
+        # Restore the original pandas setting so we don't mess up the rest of your script
+        pd.options.mode.copy_on_write = original_cow
